@@ -1,0 +1,1 @@
+When init DB connection for Pydio enter private network IP (check in Portainer) and login credentials from env. file

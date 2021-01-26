@@ -1,0 +1,20 @@
+api:
+  dashboard: true
+
+entryPoints:
+  http:
+    address: ":80"
+  https:
+    address: ":443"
+
+providers:
+  docker:
+    network: proxy
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: <enter email here>
+      storage: acme.json
+      httpChallenge:
+        entryPoint: http

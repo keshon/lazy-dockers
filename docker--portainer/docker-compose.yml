@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer-ce
+    networks: 
+      - proxy
+    hostname: portainer
+    ports:
+      - "9000:9000"
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
+      - traefik.http.routers.${ALIAS}.tls=true
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+      - traefik.http.services.${ALIAS}.loadbalancer.server.port=9000
+
+networks:
+  # Change if you're using another network
+  proxy:
+    external: true

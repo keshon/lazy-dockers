@@ -1,0 +1,68 @@
+version: '3'
+services:
+  # MySQL image with a default database cells and a dedicated user pydio
+  db:
+    image: mariadb:latest
+    container_name: pydio-db
+    restart: always
+    volumes:
+      - ./data/db:/var/lib/mysql
+    ports: 
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci]
+    networks:
+      - private
+
+  # Cells image with two named volumes for the static and for the data
+  cells:
+    image: pydio/cells:latest
+    container_name: pydio-app
+    restart: always
+    volumes: 
+      - ./data/app:/var/cells
+    ports:
+      - 9999:80
+      - 33060:33060
+    environment:
+      - CELLS_BIND=${HOST}:80
+      - CELLS_EXTERNAL=https://${HOST}
+      - CELLS_NO_TLS=1
+      - CELLS_WORKING_DIR=/var/cells
+      - PYDIO_GRPC_EXTERNAL=33060
+      - PYDIO_LOGS_LEVEL=production
+    depends_on:
+      - db
+    networks:
+      - private
+      - proxy
+    labels:
+      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}Headers
+      - traefik.http.middlewares.${ALIAS}Headers.headers.browserXSSFilter=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.frameDeny=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.referrerPolicy=no-referrer
+      - traefik.http.middlewares.${ALIAS}Headers.headers.customFrameOptionsValue=SAMEORIGIN
+      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLHost=${HOST}
+      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLRedirect=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsSeconds=15552000
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsPreload=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.contentSecurityPolicy=font-src https://${ALIAS} data:;      
+      #tls
+      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
+      - traefik.http.routers.${ALIAS}.tls=true
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+
+networks:
+  # Change if you're using another network
+  proxy:
+    external: true
+  private:
+    driver: bridge
+    internal: true
