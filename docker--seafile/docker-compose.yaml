@@ -1,0 +1,61 @@
+version: '2.0'
+services:
+  db:
+    image: mariadb:10.1
+    container_name: seafile-mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}                  # Requested, set the root's password of MySQL service.
+      - MYSQL_LOG_CONSOLE=true
+    volumes:
+      - ./data/seafile-mysql/db:/var/lib/mysql                      # Requested, specifies the path to MySQL data persistent store.
+    networks:
+      - private
+
+  memcached:
+    image: memcached:1.5.6
+    container_name: seafile-memcached
+    entrypoint: memcached -m 256
+    networks:
+      - private
+          
+  seafile:
+    image: seafileltd/seafile-mc:latest
+    container_name: seafile
+    volumes:
+      - ./data/seafile-data:/shared
+    environment:
+      - DB_HOST=db
+      - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
+      - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
+      - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
+      - SEAFILE_SERVER_LETSENCRYPT=false
+      - SEAFILE_SERVER_HOSTNAME=${HOST}
+    depends_on:
+      - db
+      - memcached
+    networks:
+      - private
+      - proxy
+    labels:
+      - traefik.frontend.entryPoints=https
+      - traefik.frontend.headers.SSLHost=${HOST}
+      - traefik.frontend.headers.SSLRedirect=true
+      - traefik.frontend.headers.STSIncludeSubdomains=true
+      - traefik.frontend.headers.STSPreload=true
+      - traefik.frontend.headers.STSSeconds=315360000
+      - traefik.frontend.headers.browserXSSFilter=true
+      - traefik.frontend.headers.contentTypeNosniff=true
+      - traefik.frontend.headers.forceSTSHeader=true
+      - traefik.frontend.headers.frameDeny=true
+      - traefik.frontend.headers.referrerPolicy=no-referrer
+      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
+      - traefik.http.routers.${ALIAS}.tls=true
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+
+networks:
+  # Change if you're using another network
+  proxy:
+    external: true
+  private:
+    driver: bridge
+    internal: true
