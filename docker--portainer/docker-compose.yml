@@ -7,7 +7,7 @@ services:
     networks: 
       - proxy
     hostname: portainer
-    restart: unless-stopped    
+    restart: unless-stopped
     ports:
       - "9000:9000"
       - "8000:8000"
