@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  db:
+    container_name: strapi-db
+    image: mysql:5.7
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - private
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+    volumes:
+      - ./data/db:/var/lib/mysql
+
+  strapi:
+    container_name: strapi-app
+    image: strapi/strapi
+    environment:
+      - DATABASE_CLIENT=mysql
+      - DATABASE_HOST=db
+      - DATABASE_PORT=3306
+      - DATABASE_NAME=${MYSQL_DATABASE}
+      - DATABASE_USERNAME=${MYSQL_USER}
+      - DATABASE_PASSWORD=${MYSQL_PASSWORD}
+    ports:
+      - 1337:1337
+    volumes:
+      - ./data/app:/srv/app
+    depends_on:
+      - db
+    networks:
+      - private
+      - proxy
+    labels:
+      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
+      - traefik.http.routers.${ALIAS}.tls=true
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+      - traefik.http.services.${ALIAS}.loadbalancer.server.port=1337
+      
+networks:
+  # Change if you're using another network
+  proxy:
+    external: true
+  private:
+    driver: bridge
+    internal: true
