@@ -1,45 +1,50 @@
 version: '3'
+
 services:
-  # MySQL image with a default database cells and a dedicated user pydio
   db:
     image: mariadb:latest
-    container_name: pydio-db
+    container_name: nextcloud-mariadb
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     restart: unless-stopped
     volumes:
       - ./data/db:/var/lib/mysql
-    ports: 
-      - 3306:3306
+      - ./conf/mysql/override.cnf:/etc/mysql/conf.d/override.cnf     
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
-    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci]
     networks:
       - private
 
-  # Cells image with two named volumes for the static and for the data
-  cells:
-    image: pydio/cells:latest
-    container_name: pydio-app
+  redis:
+    image: redis:alpine
+    container_name: nextcloud-redis
     restart: unless-stopped
-    volumes: 
-      - ./data/app:/var/cells
-    ports:
-      - 9999:80
-      - 33060:33060
+    networks:
+      - private
+
+  app:
+    image: nextcloud:stable
+    container_name: nextcloud-app
+    restart: unless-stopped
+    volumes:
+      - ./data/nextcloud:/var/www/html
+      - ./conf/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
     environment:
-      - CELLS_BIND=${HOST}:80
-      - CELLS_EXTERNAL=https://${HOST}
-      - CELLS_NO_TLS=1
-      - CELLS_WORKING_DIR=/var/cells
-      - PYDIO_GRPC_EXTERNAL=33060
-      - PYDIO_LOGS_LEVEL=production
+      - MYSQL_HOST=db
+      - REDIS_HOST=redis
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
     depends_on:
       - db
+      - redis
     networks:
       - private
       - proxy
+    ports:
+      - "8081:80"
     labels:
       - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}Headers
       - traefik.http.middlewares.${ALIAS}Headers.headers.browserXSSFilter=true
@@ -53,12 +58,25 @@ services:
       - traefik.http.middlewares.${ALIAS}Headers.headers.stsIncludeSubdomains=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.stsPreload=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
-      - traefik.http.middlewares.${ALIAS}Headers.headers.contentSecurityPolicy=font-src https://cloud--2fp9wfs45p.mirball.com data:;      
+      - traefik.http.middlewares.${ALIAS}Headers.headers.contentSecurityPolicy=font-src https://fonts.googleapis.com https://fonts.gstatic.com data:;      
       #tls
       - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
       - traefik.http.routers.${ALIAS}.tls=true
       - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
 
+  cron:
+    image: nextcloud
+    container_name: nextcloud-cron
+    restart: always
+    volumes:
+      - ./data/nextcloud:/var/www/html
+    entrypoint: /cron.sh
+    depends_on:
+      - db
+      - redis
+    networks:
+      - private
+  
 networks:
   # Change if you're using another network
   proxy:

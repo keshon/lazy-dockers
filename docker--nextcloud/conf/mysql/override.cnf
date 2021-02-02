@@ -1,0 +1,6 @@
+innodb_file_per_table=1
+innodb_buffer_pool_size = 1G
+max_connections = 300
+query_cache_size = 128M
+tmp_table_size= 64M 
+max_heap_table_size= 64M

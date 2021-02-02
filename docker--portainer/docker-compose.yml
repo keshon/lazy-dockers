@@ -2,11 +2,12 @@ version: "3"
 
 services:
   portainer:
-    image: portainer/portainer-ce
+    image: portainer/portainer-ce:alpine
     container_name: portainer-ce
     networks: 
       - proxy
     hostname: portainer
+    restart: unless-stopped    
     ports:
       - "9000:9000"
       - "8000:8000"
