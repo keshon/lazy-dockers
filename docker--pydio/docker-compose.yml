@@ -53,7 +53,6 @@ services:
       - traefik.http.middlewares.${ALIAS}Headers.headers.stsIncludeSubdomains=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.stsPreload=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
-      - traefik.http.middlewares.${ALIAS}Headers.headers.contentSecurityPolicy=font-src https://cloud--2fp9wfs45p.mirball.com data:;      
       #tls
       - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
       - traefik.http.routers.${ALIAS}.tls=true
