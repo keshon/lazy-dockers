@@ -1,0 +1,102 @@
+version: "3.5"
+
+services:
+  # Gitlab
+  gitlab:
+    container_name: ${ALIAS}--gitlab
+    image: gitlab/gitlab-ce:latest
+    restart: unless-stopped
+    hostname: ${GITLAB_HOST}                      # Change host here
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url '${GITLAB_EXTERNAL_URL}'       # Change url here
+
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+        nginx['proxy_set_headers'] = {
+          "X-Forwarded-Proto" => "https",
+          "X-Forwarded-Ssl" => "on"
+        }
+
+        # DATABASE CONNECTION SETTINGS: in our case we use postgresql as database
+        gitlab_rails['db_adapter'] = "postgresql"
+        gitlab_rails['db_database'] = "gitlab"
+        gitlab_rails['db_username'] = "postgres"
+        gitlab_rails['db_password'] = "CHANGE_TO_RANDOM_PASSWORD" # set the database password here
+        gitlab_rails['db_host'] = "gitlab-postgres"
+
+        # SMTP SETTINGS: So that gitlab can send emails. In our case we send via google mail.
+        gitlab_rails['smtp_enable'] = true
+        gitlab_rails['smtp_address'] = "${GITLAB_SMTP_ADDR}"
+        gitlab_rails['smtp_port'] = ${GITLAB_SMTP_PORT}
+        gitlab_rails['smtp_user_name'] = "${GITLAB_SMTP_USER}"
+        gitlab_rails['smtp_password'] = "${GITLAB_SMTP_PASSWORD}"
+        gitlab_rails['smtp_domain'] = "${GITLAB_SMTP_DOMAIN}"
+        gitlab_rails['smtp_authentication'] = "plain"  # or 'login'
+        gitlab_rails['smtp_enable_starttls_auto'] = true
+        gitlab_rails['smtp_tls'] = false
+        #gitlab_rails['smtp_openssl_verify_mode'] = "peer"
+        
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+     
+    ports:
+      - "2222:22"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ALIAS}_insecure.entrypoints=http
+      - traefik.http.routers.${ALIAS}_insecure.rule=Host(`${GITLAB_HOST}`)
+      - traefik.http.routers.${ALIAS}_insecure.middlewares=redirect@file
+
+      - traefik.http.routers.${ALIAS}.entrypoints=https
+      - traefik.http.routers.${ALIAS}.rule=Host(`${GITLAB_HOST}`)
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+      - traefik.http.services.${ALIAS}.loadbalancer.server.port=80
+      - traefik.docker.network=proxy
+
+      # Can't filter TCP traffic on SNI, see link below
+      # https://community.containo.us/t/routing-ssh-traffic-with-traefik-v2/717/6
+      - traefik.tcp.routers.gitlab-ssh.rule=HostSNI(`*`)
+      - traefik.tcp.routers.gitlab-ssh.entrypoints=ssh
+      - traefik.tcp.routers.gitlab-ssh.service=gitlab-ssh-svc
+      - traefik.tcp.services.gitlab-ssh-svc.loadbalancer.server.port=22
+    volumes:
+      - ./gitlab_data/config:/etc/gitlab
+      - ./gitlab_data/logs:/var/log/gitlab
+      - ./gitlab_data/data:/var/opt/gitlab
+    networks:
+      - proxy
+      - gitlab-network
+  
+  # Postgres
+  database:
+    image: postgres:alpine
+    container_name: ${ALIAS}--postgres
+    restart: unless-stopped
+    hostname: gitlab-postgres
+    networks:
+      - gitlab-network
+    environment:
+      POSTGRES_PASSWORD: "CHANGE_TO_RANDOM_PASSWORD" # use the same password as the one you used above
+      POSTGRES_DB: gitlab
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+  
+  # Runner
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: ${ALIAS}--runner
+    volumes:
+      - ./runner_data/config/:/etc/gitlab-runner:Z
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - gitlab-network
+    labels:
+      - traefik.enable=false
+
+networks:
+  proxy:
+    name: proxy
+    external: false
+  gitlab-network:
+    name: gitlab-network
+    external: false
