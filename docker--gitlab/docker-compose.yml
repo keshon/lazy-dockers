@@ -17,6 +17,10 @@ services:
           "X-Forwarded-Proto" => "https",
           "X-Forwarded-Ssl" => "on"
         }
+        
+        gitlab_rails['initial_root_password'] = "${GITLAB_INITIAL_ROOT_PASSWORD}"
+        gitlab_rails['display_initial_root_password'] = true
+        gitlab_rails['store_initial_root_password'] = true
 
         # DATABASE CONNECTION SETTINGS: in our case we use postgresql as database
         gitlab_rails['db_adapter'] = "postgresql"
@@ -32,10 +36,10 @@ services:
         gitlab_rails['smtp_user_name'] = "${GITLAB_SMTP_USER}"
         gitlab_rails['smtp_password'] = "${GITLAB_SMTP_PASSWORD}"
         gitlab_rails['smtp_domain'] = "${GITLAB_SMTP_DOMAIN}"
-        gitlab_rails['smtp_authentication'] = "plain"  # or 'login'
+        gitlab_rails['smtp_authentication'] = "login"  # or 'login'
         gitlab_rails['smtp_enable_starttls_auto'] = true
         gitlab_rails['smtp_tls'] = false
-        #gitlab_rails['smtp_openssl_verify_mode'] = "peer"
+        gitlab_rails['smtp_openssl_verify_mode'] = "peer"
         
         gitlab_rails['gitlab_shell_ssh_port'] = 2222
      
