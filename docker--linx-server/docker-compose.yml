@@ -1,0 +1,39 @@
+version: '3.3'
+services:
+  app:
+    container_name: ${ALIAS}
+    image: ${ALIAS}-image
+    restart: always
+    tty: true
+    volumes:
+      - ./data/storage/files:/opt/linx-data/files/
+      - ./data/storage/meta:/opt/linx-data/meta/
+      - ./data/linx-server.conf:/opt/linx-server.conf
+    networks:
+      - proxy
+    ports:
+      - 3075:8080
+    labels:
+      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}Headers
+      - traefik.http.middlewares.${ALIAS}Headers.headers.browserXSSFilter=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.frameDeny=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.referrerPolicy=no-referrer
+      - traefik.http.middlewares.${ALIAS}Headers.headers.customFrameOptionsValue=SAMEORIGIN
+      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLHost=${HOST}
+      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLRedirect=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsSeconds=15552000
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsPreload=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
+      #tls
+      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
+      - traefik.http.routers.${ALIAS}.tls=true
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+    command: >
+        bash -c "cd /usr/project && export TERM=xterm-256color && ./app -config /opt/linx-server.conf -filespath=/opt/linx-data/files/ -metapath=/opt/linx-data/meta/"
+
+networks:
+  # Change if you're using another network
+  proxy:
+    external: true

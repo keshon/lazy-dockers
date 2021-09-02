@@ -1,0 +1,40 @@
+version: '3.3'
+services:
+  plik:
+    user: root
+    container_name: plik
+    ports:
+      - '8089:8080'
+    volumes:
+      - './data/plikd.cfg:/home/plik/server/plikd.cfg'
+      - './data/files:/home/plik/server/files'
+      - '/etc/localtime:/etc/localtime:ro'
+    image: rootgg/plik
+    networks: 
+      - proxy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}Headers
+      - traefik.http.middlewares.${ALIAS}Headers.headers.browserXSSFilter=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.frameDeny=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.referrerPolicy=no-referrer
+      - traefik.http.middlewares.${ALIAS}Headers.headers.customFrameOptionsValue=SAMEORIGIN
+      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLHost=${HOST}
+      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLRedirect=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsSeconds=15552000
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsPreload=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.contentSecurityPolicy=object-src 'none';   
+      #tls
+      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
+      - traefik.http.routers.${ALIAS}.tls=true
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+
+networks:
+  # Change if you're using another network
+  proxy:
+    external: true
