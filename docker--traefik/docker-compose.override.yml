@@ -18,9 +18,10 @@ services:
       - traefik.http.routers.traefik-https.service=api@internal
       - traefik.http.routers.traefik-https.tls.certresolver=letsencrypt
       - traefik.http.routers.traefik-https.middlewares=auth
+
       - traefik.http.middlewares.auth.basicauth.users=${LOGIN}:${PASSWORD}
       - traefik.http.middlewares.redirect.redirectscheme.scheme=https
 networks:
-  # Change if you're using another network
+  # Traefik network
   proxy:
     external: true

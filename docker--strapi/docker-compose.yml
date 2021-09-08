@@ -18,9 +18,9 @@ services:
       - traefik.http.routers.${ALIAS}-phpmyadmin.tls=true
       - traefik.http.routers.${ALIAS}-phpmyadmin.tls.certresolver=letsencrypt
   db:
-    container_name: ${ALIAS}--mariadb
     image: mariadb:10-focal
-    restart: always
+    container_name: ${ALIAS}--mariadb
+    restart: unless-stopped
     command: --default-authentication-plugin=mysql_native_password
     networks:
       - private
@@ -33,8 +33,8 @@ services:
       - ./data/mariadb:/var/lib/mysql
 
   strapi:
-    container_name: ${ALIAS}--strapi
     image: strapi/strapi
+    container_name: ${ALIAS}--strapi
     environment:
       - DATABASE_CLIENT=mysql
       - DATABASE_HOST=db
@@ -51,7 +51,7 @@ services:
     networks:
       - private
       - proxy
-    restart: always
+    restart: unless-stopped
     labels:
       - traefik.http.routers.${ALIAS}.rule=Host(`${APP_HOST}`)
       - traefik.http.routers.${ALIAS}.tls=true
@@ -59,9 +59,10 @@ services:
       - traefik.http.services.${ALIAS}.loadbalancer.server.port=1337
       
 networks:
-  # Change if you're using another network
+  # Traefik network
   proxy:
     external: true
+  # Local network
   private:
     driver: bridge
     internal: true

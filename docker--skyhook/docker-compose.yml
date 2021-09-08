@@ -1,0 +1,32 @@
+version: '3.3'
+services:
+  skyhook:
+    image: commit451/skyhook
+    container_name: ${ALIAS}
+    ports:
+      - 9180:8080
+    networks: 
+      - proxy
+    restart: unless-stopped
+    labels:
+      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
+      - traefik.http.routers.${ALIAS}.tls=true
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}Headers
+
+      - traefik.http.middlewares.${ALIAS}Headers.headers.browserXSSFilter=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.frameDeny=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.referrerPolicy=no-referrer
+      - traefik.http.middlewares.${ALIAS}Headers.headers.customFrameOptionsValue=SAMEORIGIN
+      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLHost=${HOST}
+      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLRedirect=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsSeconds=15552000
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsPreload=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
+
+networks:
+  # Traefik network
+  proxy:
+    external: true
