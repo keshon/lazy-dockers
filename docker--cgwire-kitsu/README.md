@@ -3,6 +3,7 @@ This is a fork of [mathbou/docker-cgwire](https://github.com/mathbou/docker-cgwi
 Added changes:
 - traefik support
 - new env vars for email and s3 support
+- docker volumes to host dirs
 
 # Docker-cgwire
 
