@@ -1,0 +1,44 @@
+COMPOSE_PROJECT_NAME=cgwire
+HOST=example.com
+
+
+# Redis
+KV_HOST=redis
+
+# Kitsu
+KITSU_VERSION=latest
+PORT=8078
+
+# Postgres
+# the login is `postgres`
+DB_HOST=db
+DB_VERSION=12
+DB_PASSWORD=Un53cur3Pa55w0rd
+
+# Zou job
+ENABLE_JOB_QUEUE=True
+
+# Zou event
+EVENT_STREAM_HOST=zou-event
+
+# Zou
+ZOU_VERSION=latest
+
+PREVIEW_FOLDER=/opt/zou/previews
+TMP_DIR=/tmp/zou
+
+MAIL_SERVER=smtp.example.com
+MAIL_USERNAME=email@example.com
+MAIL_PASSWORD=password"
+MAIL_PORT=465
+MAIL_USE_SSL=True
+MAIL_DEFAULT_SENDER=email@example.com
+DOMAIN_NAME=example.com
+DOMAIN_PROTOCOL=https
+
+FS_BACKEND=s3
+FS_S3_REGION=eu-central-1
+FS_BUCKET_PREFIX=prefixexample_
+FS_S3_ENDPOINT=https://s3.eu-central-1.example.com
+FS_S3_ACCESS_KEY=1234
+FS_S3_SECRET_KEY=1234567890

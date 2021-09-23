@@ -1,0 +1,103 @@
+version: '3.5'
+
+x-base: &base
+    restart: unless-stopped
+    networks:
+        - internal
+
+x-env: &env
+    env_file:
+        - ${ENV_FILE:-./env}
+
+x-backend-volumes: &backend_volumes
+    volumes:
+        - './data/previews:${PREVIEW_FOLDER:?}'
+        - './data/tmp:${TMP_DIR:-/tmp/zou}'
+
+services:
+    kitsu:
+        restart: unless-stopped
+        networks:
+            - internal
+            - proxy
+        <<: *env
+        container_name: ${COMPOSE_PROJECT_NAME:?}-kitsu
+        image: registry.gitlab.com/mathbou/docker-cgwire/kitsu:${KITSU_VERSION:-latest}
+        depends_on:
+            - zou-app
+            - zou-event
+            - zou-jobs
+        ports:
+            - '${PORT:-80}:80'
+        labels:
+          - "traefik.http.routers.${COMPOSE_PROJECT_NAME:?}.middlewares=${COMPOSE_PROJECT_NAME:?}-headers"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.browserXSSFilter=true"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.contentTypeNosniff=true"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.frameDeny=true"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.referrerPolicy=no-referrer"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.customFrameOptionsValue=SAMEORIGIN"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.SSLHost=${HOST}"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.SSLRedirect=true"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.stsSeconds=15552000"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.stsIncludeSubdomains=true"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.stsPreload=true"
+          - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME:?}-headers.headers.forceSTSHeader=true"
+          - "traefik.http.routers.${COMPOSE_PROJECT_NAME:?}.rule=Host(`${HOST}`)"
+          - "traefik.http.routers.${COMPOSE_PROJECT_NAME:?}.tls=true"
+          - "traefik.http.routers.${COMPOSE_PROJECT_NAME:?}.tls.certresolver=letsencrypt"
+
+    zou-app:
+        <<: *base
+        <<: *env
+        container_name: ${COMPOSE_PROJECT_NAME:?}-zou-app
+        image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
+        depends_on:
+          - db
+        <<: *backend_volumes
+        command: "gunicorn --error-logfile - --access-logfile - -w 3 -k gevent -b :5000 zou.app:app"
+
+    zou-event:
+        <<: *base
+        <<: *env
+        container_name: ${COMPOSE_PROJECT_NAME:?}-zou-event
+        image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
+        depends_on:
+          - redis
+        command: "gunicorn --error-logfile - --access-logfile - -w 1 -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -b :5001 zou.event_stream:app"
+
+    zou-jobs:
+        <<: *base
+        <<: *env
+        container_name: ${COMPOSE_PROJECT_NAME:?}-zou-jobs
+        image: registry.gitlab.com/mathbou/docker-cgwire/zou:${ZOU_VERSION:-latest}
+        <<: *backend_volumes
+        command: "rq worker -c zou.job_settings"
+
+    db:
+        restart: unless-stopped
+        networks:
+            - internal
+        #    - pgadmin
+        container_name: ${COMPOSE_PROJECT_NAME:?}-db-${DB_VERSION:?}
+        image: postgres:${DB_VERSION:?}-alpine
+        volumes:
+            - './data/db:/var/lib/postgresql/data'
+            - './db/pg_ctl.conf:/etc/postgresql/${DB_VERSION:?}/main/pg_ctl.conf:ro'
+        environment:
+            - POSTGRES_PASSWORD=${DB_PASSWORD:?}
+
+    redis:
+        <<: *base
+        container_name: ${COMPOSE_PROJECT_NAME:?}-redis
+        image: redis:alpine
+        volumes:
+            - './data/redis:/data'
+
+# Uncomment pgadmin network if needed   
+networks:
+    internal:
+        name: ${COMPOSE_PROJECT_NAME:?}-internal
+    proxy:
+        external: true
+    #pgadmin:
+        #external: true
