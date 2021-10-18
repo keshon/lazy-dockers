@@ -1,0 +1,54 @@
+version: "3.3"
+services:
+  poste:
+    image: analogic/poste.io
+    container_name: ${ALIAS}
+    hostname: ${MAIL_HOST}
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - "HOSTNAME=${MAIL_HOST}"
+      - "HTTP_PORT=8880"
+      - "HTTPS_PORT=4443"
+      - "HTTPS=ON" # To disable all redirects to encrypted HTTP, its useful when you are using some kind of reverse proxy (place this argument before image name!)
+      - "DISABLE_CLAMAV=FALSE"
+      - "LETSENCRYPT_EMAIL=${POSTMASTER_EMAIL}"
+      - "LETSENCRYPT_HOST=${HOST}"
+      - "VIRTUAL_HOST=${MAIL_HOST}"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "./data:/data"
+      - "${CERT_SERVER_PATH}:/data/ssl/server.crt"
+      - "${CERT_CA_PATH}:/data/ssl/ca.crt"
+      - "${CERT_PRIVATE_PATH}:/data/ssl/server.key"
+    ports:
+     - "25:25"    # SMTP - mostly processing incoming mails                                                                                                                                                 
+     - "8880:8880"  # HTTP - redirect to https (see options) and authentication for Let"s encrypt service                                                                                                     
+     - "110:110"  #  POP3 - standard protocol for accessing mailbox, STARTTLS is required before client auth                                                                                                
+     - "143:143"  #  IMAP - standard protocol for accessing mailbox, STARTTLS is required before client auth                                                                                                
+     - "4443:4443"  #  HTTPS - access to administration or webmail client                                                                                                                                   
+     - "587:587"  #  MSA - SMTP port used primarily for email clients after STARTTLS and auth                                                                                                               
+     - "993:993"  #  IMAPS - alternative port for IMAP encrypted since connection                                                                                                                           
+     - "995:995"  #  POP3S - encrypted POP3 since connections
+     - "4190:4190" # Sieve port
+    labels:
+     #- "traefik.enable=true"
+     
+     # Webmail
+     - "traefik.http.routers.${ALIAS}-webmail.rule=Host(`${WEBMAIL_HOST}`)"
+     - "traefik.http.routers.${ALIAS}-webmail.service=${ALIAS}-webmail"
+     - "traefik.http.routers.${ALIAS}-webmail.entrypoints=https"
+     - "traefik.http.routers.${ALIAS}-webmail.tls.certresolver=letsencrypt"
+     - "traefik.http.services.${ALIAS}-webmail.loadbalancer.server.port=4443"
+     
+     # Let"s encrypt
+     - "traefik.http.routers.${ALIAS}-letsencrypt.rule=HostRegexp(`{HOST}`,`{subdomain:[a-z]*}.{HOST}`) && PathPrefix(`/.well-known/`)"
+     - "traefik.http.routers.${ALIAS}-letsencrypt.service=${ALIAS}-webmail"
+     - "traefik.http.routers.${ALIAS}-letsencrypt.entrypoints=http"
+     - "traefik.http.services.${ALIAS}-letsencrypt.loadbalancer.server.port=4443"
+
+networks:
+  # Change if you"re using another network
+  proxy:
+    external: true

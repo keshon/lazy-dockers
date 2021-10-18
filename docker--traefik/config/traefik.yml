@@ -1,3 +1,7 @@
+########################
+# Global configuration #
+########################
+
 api:
   dashboard: true
 
@@ -10,11 +14,23 @@ entryPoints:
 providers:
   docker:
     network: proxy
+    endpoint: "unix:///var/run/docker.sock"
+    watch: true
 
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: <enter email here>
+      email: email@example.com
       storage: acme.json
       httpChallenge:
         entryPoint: http
+
+# Configuring a buffer of 100 lines
+accessLog:
+  filePath: "./logs/access.log"
+  bufferingSize: 100
+
+# Writing Logs to a File
+log:
+  filePath: "./logs/traefik.log"
+  level: "ERROR"
