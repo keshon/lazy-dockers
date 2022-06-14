@@ -3,7 +3,7 @@ services:
   traefik-certificate-extractor:
     container_name: traefik-cert-extractor
     volumes:
-      - '/opt/docker--traefik/letsencrypt:/app/data'
+      - '/opt/traefik/letsencrypt:/app/data'
       - './certs:/app/certs'
       - './extractor.py:/app/extractor.py'
     image: danielhuisman/traefik-certificate-extractor
