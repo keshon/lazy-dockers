@@ -3,7 +3,7 @@ version: '3'
 services:
   mongo:
     image: mongo:latest
-    container_name: pritunl-mongo
+    container_name: ${ALIAS}-mongo
     hostname: pritunldb
     restart: unless-stopped
     networks:
@@ -13,7 +13,7 @@ services:
 
   pritunl:
     image: goofball222/pritunl:latest
-    container_name: pritunl
+    container_name: ${ALIAS}-pritunl
     hostname: pritunl
     restart: unless-stopped
     depends_on:

@@ -1,8 +1,8 @@
 version: "3"
 services:
-  db:
+  postgres:
     image: postgres:latest
-    container_name: ${ALIAS}-db    
+    container_name: ${ALIAS}-postgres    
     restart: always
     environment:
      - "POSTGRES_USER=${POSTGRES_USER}"
@@ -12,9 +12,9 @@ services:
      - "./data/db:/var/lib/postgresql/data"
     networks:
      - private
-  app:
+  gogs:
     image: gogs/gogs:latest
-    container_name: ${ALIAS}-app
+    container_name: ${ALIAS}-gogs
     restart: always
     ports:
      - "10022:22"
@@ -36,7 +36,6 @@ services:
       - traefik.http.middlewares.${ALIAS}Headers.headers.browserXSSFilter=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.contentTypeNosniff=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.frameDeny=true
-      #- traefik.http.middlewares.${ALIAS}Headers.headers.referrerPolicy=no-referrer
       - traefik.http.middlewares.${ALIAS}Headers.headers.customFrameOptionsValue=SAMEORIGIN
       - traefik.http.middlewares.${ALIAS}Headers.headers.SSLHost=${HOST}
       - traefik.http.middlewares.${ALIAS}Headers.headers.SSLRedirect=true

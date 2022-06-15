@@ -3,7 +3,7 @@ services:
   netdata:
     cap_add:
       - SYS_PTRACE
-    container_name: netdata
+    container_name: ${ALIAS}-netdata
     image: netdata/netdata:latest
     labels:
       - "traefik.enable=true"

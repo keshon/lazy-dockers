@@ -1,0 +1,38 @@
+version: "3.7"
+
+services:
+  node-red:
+    container_name: ${ALIAS}
+    user: root
+    image: nodered/node-red:latest
+    environment:
+      - TZ=Europe/Moscow
+    ports:
+      - "1880:1880"
+    networks:
+      - proxy
+    volumes:
+      - ./data:/data
+    labels:
+      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}Headers
+      - traefik.http.middlewares.${ALIAS}Headers.headers.browserXSSFilter=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.frameDeny=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.referrerPolicy=no-referrer
+      - traefik.http.middlewares.${ALIAS}Headers.headers.customFrameOptionsValue=SAMEORIGIN
+      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLHost=${HOST}
+      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLRedirect=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsSeconds=15552000
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.stsPreload=true
+      - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
+      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}Compress
+      - traefik.http.middlewares.${ALIAS}Compress.compress=true
+      - traefik.http.middlewares.redirect.redirectscheme.scheme=https
+      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
+      - traefik.http.routers.${ALIAS}.tls=true
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+
+networks:
+  proxy:
+    external: true

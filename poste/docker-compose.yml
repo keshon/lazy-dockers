@@ -34,14 +34,14 @@ services:
      - "4190:4190" # Sieve port
     labels:
      #- "traefik.enable=true"
-     
+
      # Webmail
      - "traefik.http.routers.${ALIAS}-webmail.rule=Host(`${WEBMAIL_HOST}`)"
      - "traefik.http.routers.${ALIAS}-webmail.service=${ALIAS}-webmail"
      - "traefik.http.routers.${ALIAS}-webmail.entrypoints=https"
      - "traefik.http.routers.${ALIAS}-webmail.tls.certresolver=letsencrypt"
      - "traefik.http.services.${ALIAS}-webmail.loadbalancer.server.port=4443"
-     
+
      # Let"s encrypt
      - "traefik.http.routers.${ALIAS}-letsencrypt.rule=HostRegexp(`{HOST}`,`{subdomain:[a-z]*}.{HOST}`) && PathPrefix(`/.well-known/`)"
      - "traefik.http.routers.${ALIAS}-letsencrypt.service=${ALIAS}-webmail"

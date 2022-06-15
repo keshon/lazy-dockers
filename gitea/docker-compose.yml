@@ -1,8 +1,8 @@
 version: "3"
 services:
-  server:
+  gitea:
     image: gitea/gitea:1.15.2
-    container_name: gitea-app
+    container_name: ${ALIAS}-gitea
     environment:
       - USER_UID=1000
       - USER_GID=1000
@@ -42,8 +42,8 @@ services:
       - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
       - traefik.http.routers.${ALIAS}.tls=true
       - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
-  db:
-    container_name: gitea-db
+  postgres:
+    container_name: ${ALIAS}-postgres
     image: postgres:alpine
     restart: unless-stopped
     environment:

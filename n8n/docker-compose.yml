@@ -2,7 +2,7 @@ version: "3"
 
 services:
   n8n:
-    container_name: ${ALIAS}
+    container_name: ${ALIAS}-n8n
     image: n8nio/n8n
     ports:
       - "5678:5678"
@@ -37,6 +37,5 @@ services:
       
 
 networks:
-  # Change if you're using another network
   proxy:
     external: true

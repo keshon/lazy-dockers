@@ -93,7 +93,7 @@ services:
         volumes:
             - './data/redis:/data'
 
-# Uncomment pgadmin network if needed   
+# Uncomment pgadmin network if access from pgadmin is needed
 networks:
     internal:
         name: ${COMPOSE_PROJECT_NAME:?}-internal

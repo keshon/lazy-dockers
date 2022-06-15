@@ -3,7 +3,7 @@ version: "3"
 services:
   portainer:
     image: portainer/portainer-ce:alpine
-    container_name: portainer-ce
+    container_name: ${ALIAS}
     networks: 
       - proxy
     hostname: portainer
@@ -21,6 +21,5 @@ services:
       - traefik.http.services.${ALIAS}.loadbalancer.server.port=9000
 
 networks:
-  # Change if you're using another network
   proxy:
     external: true

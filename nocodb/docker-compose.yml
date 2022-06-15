@@ -1,12 +1,9 @@
 version: "3.7"
 
-
-
 services:
-
     watchtower:
         image: containrrr/watchtower
-        container_name: nocodb-watchtower
+        container_name: ${ALIAS}-watchtower
         restart: always
         networks:
             - proxy    
@@ -16,9 +13,9 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock:ro
         labels:
             - "com.centurylinklabs.watchtower.enable=true"
-            
+
     nocodb:
-        container_name: nocodb-app
+        container_name: ${ALIAS}-nocodb
         image: nocodb/nocodb:latest
         restart: always
         networks:
@@ -39,10 +36,10 @@ services:
             - "com.centurylinklabs.watchtower.enable=true"
         depends_on:
           - nocodb-db
-            
-    nocodb-db:
+
+    postgres:
         image: postgres:12.1-alpine
-        container_name: nocodb-db
+        container_name: ${ALIAS}-postgres
         restart: always
         networks:
             - proxy
@@ -57,7 +54,6 @@ services:
           interval: 10s
           timeout: 2s
           retries: 10
-
 
 networks:
   proxy:

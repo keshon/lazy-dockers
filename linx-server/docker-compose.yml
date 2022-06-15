@@ -1,6 +1,6 @@
 version: '3.3'
 services:
-  app:
+  linx:
     container_name: ${ALIAS}
     image: ${ALIAS}-image
     restart: always
@@ -26,7 +26,6 @@ services:
       - traefik.http.middlewares.${ALIAS}Headers.headers.stsIncludeSubdomains=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.stsPreload=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
-      #tls
       - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
       - traefik.http.routers.${ALIAS}.tls=true
       - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
@@ -34,6 +33,5 @@ services:
         bash -c "cd /usr/project && export TERM=xterm-256color && ./app -config /opt/linx-server.conf -filespath=/opt/linx-data/files/ -metapath=/opt/linx-data/meta/"
 
 networks:
-  # Change if you're using another network
   proxy:
     external: true

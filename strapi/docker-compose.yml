@@ -3,7 +3,7 @@ version: '3'
 services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: ${ALIAS}--phpmyadmin
+    container_name: ${ALIAS}-phpmyadmin
     restart: "no"
     networks:
       - private
@@ -17,9 +17,9 @@ services:
       - traefik.http.routers.${ALIAS}-phpmyadmin.rule=Host(`${PHPMYADMIN_HOST}`)
       - traefik.http.routers.${ALIAS}-phpmyadmin.tls=true
       - traefik.http.routers.${ALIAS}-phpmyadmin.tls.certresolver=letsencrypt
-  db:
+  mariadb:
     image: mariadb:10-focal
-    container_name: ${ALIAS}--mariadb
+    container_name: ${ALIAS}-mariadb
     restart: unless-stopped
     command: --default-authentication-plugin=mysql_native_password
     networks:
@@ -34,7 +34,7 @@ services:
 
   strapi:
     image: strapi/strapi
-    container_name: ${ALIAS}--strapi
+    container_name: ${ALIAS}-strapi
     environment:
       - DATABASE_CLIENT=mysql
       - DATABASE_HOST=db
@@ -59,10 +59,8 @@ services:
       - traefik.http.services.${ALIAS}.loadbalancer.server.port=1337
       
 networks:
-  # Traefik network
   proxy:
     external: true
-  # Local network
   private:
     driver: bridge
     internal: true

@@ -1,0 +1,21 @@
+version: '3.3'
+services:
+    ${ALIAS}-app:
+        networks: 
+          - proxy
+        volumes:
+            - '$PWD/db/:/etc/x-ui/'
+            - '$PWD/cert/:/root/cert/'
+        container_name: x-ui
+        restart: unless-stopped
+        image: 'enwaiax/x-ui:latest'
+        ports:
+          - "4434:54321"
+        labels:
+          - "traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)"
+          - "traefik.http.routers.${ALIAS}.tls=true"
+          - "traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt"
+
+networks:
+    proxy:
+        external: true

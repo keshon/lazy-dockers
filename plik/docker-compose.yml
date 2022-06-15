@@ -2,7 +2,7 @@ version: '3.3'
 services:
   plik:
     user: root
-    container_name: plik
+    container_name: ${ALIAS}
     ports:
       - '8089:8080'
     volumes:
@@ -29,12 +29,10 @@ services:
       - traefik.http.middlewares.${ALIAS}Headers.headers.stsPreload=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.contentSecurityPolicy=object-src 'none';   
-      #tls
       - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
       - traefik.http.routers.${ALIAS}.tls=true
       - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
 
 networks:
-  # Change if you're using another network
   proxy:
     external: true

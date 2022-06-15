@@ -3,7 +3,7 @@ version: "3.5"
 services:
   # Gitlab
   gitlab:
-    container_name: ${ALIAS}--gitlab
+    container_name: ${ALIAS}-gitlab
     image: gitlab/gitlab-ce:latest
     restart: unless-stopped
     hostname: ${GITLAB_HOST}                      # Change host here
@@ -72,9 +72,9 @@ services:
       - gitlab-network
   
   # Postgres
-  database:
+  postgres:
     image: postgres:alpine
-    container_name: ${ALIAS}--postgres
+    container_name: ${ALIAS}-postgres
     restart: unless-stopped
     hostname: gitlab-postgres
     networks:
@@ -86,9 +86,9 @@ services:
       - ./postgres_data:/var/lib/postgresql/data
   
   # Runner
-  gitlab-runner:
+  runner:
     image: gitlab/gitlab-runner:latest
-    container_name: ${ALIAS}--runner
+    container_name: ${ALIAS}-runner
     volumes:
       - ./runner_data/config/:/etc/gitlab-runner:Z
       - /var/run/docker.sock:/var/run/docker.sock

@@ -1,9 +1,9 @@
 version: '3'
 services:
   # MySQL image with a default database cells and a dedicated user pydio
-  db:
+  mariadb:
     image: mariadb:latest
-    container_name: pydio-db
+    container_name: ${ALIAS}-mariadb
     restart: unless-stopped
     volumes:
       - ./data/db:/var/lib/mysql
@@ -18,10 +18,9 @@ services:
     networks:
       - private
 
-  # Cells image with two named volumes for the static and for the data
   cells:
     image: pydio/cells:latest
-    container_name: pydio-app
+    container_name: ${ALIAS}-cells
     restart: unless-stopped
     volumes: 
       - ./data/app:/var/cells
@@ -53,13 +52,11 @@ services:
       - traefik.http.middlewares.${ALIAS}Headers.headers.stsIncludeSubdomains=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.stsPreload=true
       - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
-      #tls
       - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
       - traefik.http.routers.${ALIAS}.tls=true
       - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
 
 networks:
-  # Change if you're using another network
   proxy:
     external: true
   private:
