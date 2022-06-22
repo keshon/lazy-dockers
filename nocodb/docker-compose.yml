@@ -21,7 +21,7 @@ services:
         networks:
           - proxy
         environment:
-          - NC_DB=pg://nocodb-db:5432?u=${DATABASE_USER}&p=${DATABASE_PW}&d=${DATABASE_NAME}          
+          - NC_DB=pg://postgres:5432?u=${DATABASE_USER}&p=${DATABASE_PW}&d=${DATABASE_NAME}          
           - NC_PUBLIC_URL=https://${DOMAINNAME}
           - NC_DISABLE_TELE=true
           - DB_QUERY_LIMIT_MIN=500
@@ -48,7 +48,7 @@ services:
            POSTGRES_PASSWORD: ${DATABASE_PW}
            POSTGRES_DB: ${DATABASE_NAME}
         volumes:
-          - ./nocodb-db:/var/lib/postgresql/data
+          - ./db:/var/lib/postgresql/data
         healthcheck:
           test: pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}
           interval: 10s
