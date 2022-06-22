@@ -35,7 +35,7 @@ services:
             - "traefik.http.routers.nocodb.tls.certresolver=letsencrypt"            
             - "com.centurylinklabs.watchtower.enable=true"
         depends_on:
-          - nocodb-db
+          - postgres
 
     postgres:
         image: postgres:12.1-alpine
