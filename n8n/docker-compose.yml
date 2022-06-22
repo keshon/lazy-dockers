@@ -2,10 +2,10 @@ version: "3"
 
 services:
   n8n:
-    container_name: ${ALIAS}-n8n
+    container_name: ${ALIAS}
     image: n8nio/n8n
     ports:
-      - "5678:5678"
+      - ${PORT}:5678
     networks:
       - proxy
     labels:
@@ -29,8 +29,12 @@ services:
       - N8N_HOST=${HOST}
       - N8N_PORT=5678
       - N8N_PROTOCOL=https
+      - N8N_HIRING_BANNER_ENABLED=false
       - NODE_ENV=production
       - WEBHOOK_URL=https://${HOST}
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
+      - DB_SQLITE_VACUUM_ON_STARTUP=true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data:/home/node/.n8n
