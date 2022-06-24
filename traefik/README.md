@@ -13,7 +13,7 @@ git clone https://github.com/cedrichopf/traefik-dockerized.git
 chmod 600 letsencrypt/acme.json
 ```
 
-4. Set proper domain in .env file
+4. Set proper domain in .env file and valid email in config/traefik.yml
 
 5. Run compose:
 ```bash
