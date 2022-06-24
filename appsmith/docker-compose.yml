@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  appsmith:
+    image: index.docker.io/appsmith/appsmith-ce
+    container_name: ${ALIAS}-appsmith
+    networks: 
+      - proxy      
+    volumes:
+      - ./stacks:/appsmith-stacks
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable="true"
+      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
+      - traefik.http.routers.${ALIAS}.tls=true
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+
+  watchtower:
+    image: containrrr/watchtower:latest-dev
+    container_name: ${ALIAS}-watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    # Update check interval in seconds.
+    command: --schedule "0 0 * ? * *" --label-enable --cleanup
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
