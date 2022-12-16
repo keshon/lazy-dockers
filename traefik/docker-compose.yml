@@ -21,7 +21,7 @@ services:
       - "./logs:/logs" # folder containing access.log file
     restart: unless-stopped
     environment:
-      TZ: "Europe/Moscow"
+      TZ: ${TZ}
       # all environment variables are optional and show the default values:
       LOGROTATE_LOGS: "/logs/*.log" # log files to rotate, directory must match volume mount
       LOGROTATE_TRIGGER_INTERVAL: daily  # rotate daily, must be one of: daily, weekly, monthly, yearly
