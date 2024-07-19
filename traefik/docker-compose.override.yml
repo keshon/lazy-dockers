@@ -1,10 +1,8 @@
-version: '3.7'
-
 services:
   traefik:
     container_name: ${ALIAS} # Remove if using multiple instances
     networks:
-      - proxy # Change if you're using another network
+      - proxy
     labels:
       # Traefik configuration for the dashboard
       # Remove the labels section if the dashboard is disabled
@@ -20,13 +18,17 @@ services:
       - "traefik.http.routers.${ALIAS}-https.tls.certresolver=letsencrypt"
       - "traefik.http.routers.${ALIAS}-https.middlewares=auth"
 
+      # Basic Authentication middleware
       - "traefik.http.middlewares.auth.basicauth.users=${LOGIN}:${PASSWORD}"
 
-      - "traefik.http.middlewares.redirect.redirectscheme.scheme=https"
+      # Middleware for redirecting HTTP to HTTPS
+      # - "traefik.http.middlewares.redirect.redirectscheme.scheme=https"
+
+      # Other middlewares
       - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=1073741824"
       - "traefik.http.middlewares.autodetect.contenttype.autodetect=false"
       - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+
 networks:
-  # Change if you're using another network
   proxy:
     external: true

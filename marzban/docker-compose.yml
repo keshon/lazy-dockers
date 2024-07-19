@@ -1,49 +1,55 @@
 services:
-  plik:
-    image: rootgg/plik
+  marzban:
+    image: gozargah/marzban:latest
     container_name: ${ALIAS}
-    restart: unless-stopped
-    user: root
-    security_opt:
-      - no-new-privileges:true
+    restart: always
+    env_file: 
+      - ".env"
+      - ".env-marzban"
     ports:
-      - 8089:8080
-    networks: 
+      - 8001:8000
+      - 8081:8081
+      - 8080:8080
+      - 8443:8443
+      - 2053:2053
+      - 2083:2083
+      - 1080:1080
+    networks:
       - proxy
     volumes:
-      - './data/plikd.cfg:/home/plik/server/plikd.cfg'
-      - './data/files:/home/plik/server/files'
-      - '/etc/localtime:/etc/localtime:ro'
+      - ./data/db.sqlite3:/code/db.sqlite3
     labels:
-      # HTTP
+      # Enable Traefik for this service
       - traefik.enable=true
+
+      # Define HTTP router
       - traefik.http.routers.${ALIAS}-http.entrypoints=http
       - traefik.http.routers.${ALIAS}-http.rule=Host(`${HOST}`)
 
-      # HTTPS
+      # Define HTTPS router
       - traefik.http.routers.${ALIAS}.entrypoints=https
       - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
       - traefik.http.routers.${ALIAS}.tls=true
       - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
-      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}-to-https,${ALIAS}-headers # List of middlewares to load
+      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}-to-https,${ALIAS}-headers # middlewares to load
       
-      # Loadbalancer
-      #- traefik.http.services.${ALIAS}.loadbalancer.server.port=0000
+      # Define the service to use for load balancing
+      - traefik.http.services.${ALIAS}.loadbalancer.server.port=8000
 
-      # Redirecting middleware for redirecting HTTP to HTTPS
+      # Redirect HTTP to HTTPS middleware
       - traefik.http.middlewares.${ALIAS}-to-https.redirectscheme.scheme=https
 
-      # Header middleware configuration
+      # Security headers middleware
       - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}-headers
 
-      # Header middleware - Security headers configuration
+      # Security headers middleware - Security headers configuration
       - traefik.http.middlewares.${ALIAS}-headers.headers.browserXSSFilter=true
       - traefik.http.middlewares.${ALIAS}-headers.headers.contentTypeNosniff=true
       - traefik.http.middlewares.${ALIAS}-headers.headers.frameDeny=true
       - traefik.http.middlewares.${ALIAS}-headers.headers.referrerPolicy=no-referrer
       - traefik.http.middlewares.${ALIAS}-headers.headers.customFrameOptionsValue=SAMEORIGIN
 
-      # Header middleware - Strict Transport Security (HSTS) configuration
+      # Security headers middleware - Strict Transport Security (HSTS) configuration
       - traefik.http.middlewares.${ALIAS}-headers.headers.stsSeconds=15552000
       - traefik.http.middlewares.${ALIAS}-headers.headers.stsIncludeSubdomains=true
       - traefik.http.middlewares.${ALIAS}-headers.headers.stsPreload=true

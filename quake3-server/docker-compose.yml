@@ -1,10 +1,7 @@
-version: "3.2"
-
 services:
   ioquake:
     image: ${ALIAS}
     container_name: ${ALIAS}
-    command: ["+exec", "server.cfg", "+exec", "levels.cfg", "+exec", "bots.cfg"]
     ports:
         - 27960:27960/udp
     volumes:
@@ -14,3 +11,4 @@ services:
         - "./data/pak0.pk3:/home/ioq3srv/ioquake3/baseq3/pak0.pk3:ro"
         - "./data/pak9-otmopo3ok.pk3:/home/ioq3srv/ioquake3/baseq3/pak9-otmopo3ok.pk3:ro"
         - "./data/Hq3dfx.pk3:/home/ioq3srv/ioquake3/baseq3/Hq3dfx.pk3:ro"
+    command: ["+exec", "server.cfg", "+exec", "levels.cfg", "+exec", "bots.cfg"]

@@ -1,6 +1,4 @@
-########################
-# Global configuration #
-########################
+# Global configuration
 
 api:
   dashboard: true
@@ -20,8 +18,9 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: email@example.com
+      email: example@domain
       storage: acme.json
+      #tlsChallenge: true
       httpChallenge:
         entryPoint: http
 
@@ -33,4 +32,4 @@ accessLog:
 # Writing Logs to a File
 log:
   filePath: "./logs/traefik.log"
-  level: "ERROR"
+  level: "INFO"

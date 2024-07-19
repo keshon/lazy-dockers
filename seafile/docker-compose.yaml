@@ -5,27 +5,28 @@ services:
     container_name: ${ALIAS}-mariadb
     restart: unless-stopped    
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}                  # Requested, set the root's password of MySQL service.
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} # Requested, set the root's password of MySQL service.
       - MYSQL_LOG_CONSOLE=true
-    volumes:
-      - ./data/seafile-mysql/db:/var/lib/mysql                      # Requested, specifies the path to MySQL data persistent store.
     networks:
       - private
+    volumes:
+      - ./data/seafile-mysql/db:/var/lib/mysql     # Requested, specifies the path to MySQL data persistent store.
 
   memcached:
     image: memcached:1.5.6
     container_name: ${ALIAS}-memcached
     restart: unless-stopped    
-    entrypoint: memcached -m 256
     networks:
       - private
+    entrypoint: memcached -m 256
 
   seafile:
     image: seafileltd/seafile-mc:latest
     container_name: ${ALIAS}-seafile
-    restart: unless-stopped    
-    volumes:
-      - ./data/seafile-data:/shared
+    restart: unless-stopped
+    depends_on:
+      - db
+      - memcached
     environment:
       - DB_HOST=db
       - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
@@ -33,9 +34,8 @@ services:
       - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
       - SEAFILE_SERVER_LETSENCRYPT=false
       - SEAFILE_SERVER_HOSTNAME=${HOST}
-    depends_on:
-      - db
-      - memcached
+    volumes:
+      - ./data/seafile-data:/shared
     networks:
       - private
       - proxy

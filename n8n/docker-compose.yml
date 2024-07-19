@@ -2,26 +2,11 @@ version: "3"
 
 services:
   n8n:
-    container_name: ${ALIAS}
     image: n8nio/n8n
+    container_name: ${ALIAS}
+    restart: always    
     ports:
       - ${PORT}:5678
-    networks:
-      - proxy
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
-      - traefik.http.routers.${ALIAS}.tls=true
-      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
-      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}Headers
-      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLRedirect=true
-      - traefik.http.middlewares.${ALIAS}Headers.headers.STSSeconds=315360000
-      - traefik.http.middlewares.${ALIAS}Headers.headers.browserXSSFilter=true
-      - traefik.http.middlewares.${ALIAS}Headers.headers.contentTypeNosniff=true
-      - traefik.http.middlewares.${ALIAS}Headers.headers.forceSTSHeader=true
-      - traefik.http.middlewares.${ALIAS}Headers.headers.SSLHost=${HOST}
-      - traefik.http.middlewares.${ALIAS}Headers.headers.STSIncludeSubdomains=true
-      - traefik.http.middlewares.${ALIAS}Headers.headers.STSPreload=true
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER
@@ -35,10 +20,47 @@ services:
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_MAX_AGE=168
       - DB_SQLITE_VACUUM_ON_STARTUP=true
+    networks:
+      - proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./data:/home/node/.n8n
+      - ./data:/home/node/.n8n      
+    labels:
+      # Enable Traefik for this service
+      - traefik.enable=true
+
+      # Define HTTP router
+      - traefik.http.routers.${ALIAS}-http.entrypoints=http
+      - traefik.http.routers.${ALIAS}-http.rule=Host(`${HOST}`)
+
+      # Define HTTPS router
+      - traefik.http.routers.${ALIAS}.entrypoints=https
+      - traefik.http.routers.${ALIAS}.rule=Host(`${HOST}`)
+      - traefik.http.routers.${ALIAS}.tls=true
+      - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
+      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}-to-https,${ALIAS}-headers # middlewares to load
       
+      # Define the service to use for load balancing
+      #- traefik.http.services.${ALIAS}.loadbalancer.server.port=0000
+
+      # Redirect HTTP to HTTPS middleware
+      - traefik.http.middlewares.${ALIAS}-to-https.redirectscheme.scheme=https
+
+      # Security headers middleware
+      - traefik.http.routers.${ALIAS}.middlewares=${ALIAS}-headers
+
+      # Security headers middleware - Security headers configuration
+      - traefik.http.middlewares.${ALIAS}-headers.headers.browserXSSFilter=true
+      - traefik.http.middlewares.${ALIAS}-headers.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.${ALIAS}-headers.headers.frameDeny=true
+      - traefik.http.middlewares.${ALIAS}-headers.headers.referrerPolicy=no-referrer
+      - traefik.http.middlewares.${ALIAS}-headers.headers.customFrameOptionsValue=SAMEORIGIN
+
+      # Security headers middleware - Strict Transport Security (HSTS) configuration
+      - traefik.http.middlewares.${ALIAS}-headers.headers.stsSeconds=15552000
+      - traefik.http.middlewares.${ALIAS}-headers.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.${ALIAS}-headers.headers.stsPreload=true
+      - traefik.http.middlewares.${ALIAS}-headers.headers.forceSTSHeader=true
 
 networks:
   proxy:

@@ -1,40 +1,42 @@
-version: '3'
-
 services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: ${ALIAS}-phpmyadmin
     restart: "no"
-    networks:
-      - private
-      - proxy
-    ports:
-      - ${PHPMYADMIN_PORT}:80
     environment:
         PMA_HOST: db
         PMA_ABSOLUTE_URI: https://${PHPMYADMIN_HOST}/
+    ports:
+      - ${PHPMYADMIN_PORT}:80
+    networks:
+      - private
+      - proxy
     labels:
       - traefik.http.routers.${ALIAS}-phpmyadmin.rule=Host(`${PHPMYADMIN_HOST}`)
       - traefik.http.routers.${ALIAS}-phpmyadmin.tls=true
       - traefik.http.routers.${ALIAS}-phpmyadmin.tls.certresolver=letsencrypt
+
   mariadb:
     image: mariadb:10-focal
     container_name: ${ALIAS}-mariadb
     restart: unless-stopped
-    command: --default-authentication-plugin=mysql_native_password
-    networks:
-      - private
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
+    networks:
+      - private
     volumes:
       - ./data/mariadb:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
 
   strapi:
     image: strapi/strapi
     container_name: ${ALIAS}-strapi
+    restart: unless-stopped
+    depends_on:
+      - db
     environment:
       - DATABASE_CLIENT=mysql
       - DATABASE_HOST=db
@@ -46,18 +48,15 @@ services:
       - ${APP_PORT}:1337
     volumes:
       - ./data/strapi:/srv/app
-    depends_on:
-      - db
     networks:
       - private
       - proxy
-    restart: unless-stopped
     labels:
       - traefik.http.routers.${ALIAS}.rule=Host(`${APP_HOST}`)
       - traefik.http.routers.${ALIAS}.tls=true
       - traefik.http.routers.${ALIAS}.tls.certresolver=letsencrypt
       - traefik.http.services.${ALIAS}.loadbalancer.server.port=1337
-      
+
 networks:
   proxy:
     external: true

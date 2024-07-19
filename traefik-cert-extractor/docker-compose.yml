@@ -1,9 +1,10 @@
-version: '3.3'
 services:
-  traefik-certificate-extractor:
-    container_name: traefik-cert-extractor
-    volumes:
-      - '/opt/traefik/letsencrypt:/app/data'
-      - './certs:/app/certs'
-      - './extractor.py:/app/extractor.py'
+  app:
     image: danielhuisman/traefik-certificate-extractor
+    container_name: ${ALIAS}
+    restart: always
+    volumes:
+      - '/opt/dockers/traefik/letsencrypt:/app/data'
+      - './certs:/app/certs'
+      - './certs_flat:/app/certs_flat'
+      - './extractor.py:/app/extractor.py'
